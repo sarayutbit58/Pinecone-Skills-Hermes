@@ -1,0 +1,7 @@
+name: pinecone_skill_intelligence
+version: "0.1.0"
+description: Semantic skill routing for Hermes using Pinecone
+requires_env:
+  - PINECONE_API_KEY
+  - OPENAI_API_KEY
+entrypoint: src
