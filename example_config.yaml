@@ -1,0 +1,18 @@
+pinecone_skill_router:
+  enabled: true
+  auto_index_on_start: true
+
+  pinecone:
+    api_key: "${PINECONE_API_KEY}"
+    environment: "us-east-1-aws"
+    index_name: "hermes-skills"
+    namespace: "default"
+
+  embeddings:
+    provider: "openai"
+    model: "text-embedding-3-small"
+
+  routing:
+    top_k: 8
+    auto_load_threshold: 0.84
+    suggest_threshold: 0.74
