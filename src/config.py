@@ -45,10 +45,10 @@ class SkillsConfig:
 
 @dataclass
 class RoutingConfig:
-    top_k: int = 8
-    auto_load_threshold: float = 0.84
-    suggest_threshold: float = 0.74
-    max_auto_loaded_skills: int = 3
+    top_k: int = 5
+    auto_load_threshold: float = 0.86
+    suggest_threshold: float = 0.76
+    max_auto_loaded_skills: int = 2
     auto_route_instruction: bool = True
 
 
@@ -57,6 +57,8 @@ class SafetyConfig:
     allow_community_skills: bool = False
     require_platform_match: bool = True
     require_toolset_match: bool = True
+    supported_platforms: list[str] = field(default_factory=lambda: ["linux"])
+    required_runtime_tools: list[str] = field(default_factory=lambda: ["node", "npm", "npx"])
     blocked_capabilities: list[str] = field(default_factory=lambda: [
         "credential_access",
         "filesystem_write",
@@ -71,13 +73,15 @@ class RuntimeConfig:
     timeout_seconds: int = 30
     fail_closed: bool = False
     debug: bool = False
+    enforce_linux: bool = True
+    require_npm: bool = True
 
 
 @dataclass
 class PluginConfig:
     enabled: bool = True
-    auto_index_on_start: bool = True
-    auto_route_on_user_message: bool = False
+    auto_index_on_start: bool = False
+    auto_route_on_user_message: bool = True
     pinecone: PineconeConfig = field(default_factory=PineconeConfig)
     embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     skills: SkillsConfig = field(default_factory=SkillsConfig)
@@ -105,8 +109,8 @@ def load_config(raw: dict[str, Any] | None) -> PluginConfig:
 
     return PluginConfig(
         enabled=bool(raw.get("enabled", True)),
-        auto_index_on_start=bool(raw.get("auto_index_on_start", True)),
-        auto_route_on_user_message=bool(raw.get("auto_route_on_user_message", False)),
+        auto_index_on_start=bool(raw.get("auto_index_on_start", False)),
+        auto_route_on_user_message=bool(raw.get("auto_route_on_user_message", True)),
         pinecone=PineconeConfig(
             api_key=resolve_env(pc.get("api_key", os.getenv("PINECONE_API_KEY", ""))),
             index_name=pc.get("index_name", "hermes-skills"),
@@ -129,16 +133,18 @@ def load_config(raw: dict[str, Any] | None) -> PluginConfig:
             reindex_if_hash_changed=bool(skills.get("reindex_if_hash_changed", True)),
         ),
         routing=RoutingConfig(
-            top_k=int(routing.get("top_k", 8)),
-            auto_load_threshold=float(routing.get("auto_load_threshold", 0.84)),
-            suggest_threshold=float(routing.get("suggest_threshold", 0.74)),
-            max_auto_loaded_skills=int(routing.get("max_auto_loaded_skills", 3)),
+            top_k=int(routing.get("top_k", 5)),
+            auto_load_threshold=float(routing.get("auto_load_threshold", 0.86)),
+            suggest_threshold=float(routing.get("suggest_threshold", 0.76)),
+            max_auto_loaded_skills=int(routing.get("max_auto_loaded_skills", 2)),
             auto_route_instruction=bool(routing.get("auto_route_instruction", True)),
         ),
         safety=SafetyConfig(
             allow_community_skills=bool(safety.get("allow_community_skills", False)),
             require_platform_match=bool(safety.get("require_platform_match", True)),
             require_toolset_match=bool(safety.get("require_toolset_match", True)),
+            supported_platforms=_as_list(safety.get("supported_platforms"), ["linux"]),
+            required_runtime_tools=_as_list(safety.get("required_runtime_tools"), ["node", "npm", "npx"]),
             blocked_capabilities=_as_list(safety.get("blocked_capabilities"), ["credential_access", "filesystem_write", "network_egress"]),
             redact_paths=bool(safety.get("redact_paths", True)),
         ),
@@ -147,5 +153,7 @@ def load_config(raw: dict[str, Any] | None) -> PluginConfig:
             timeout_seconds=int(runtime.get("timeout_seconds", 30)),
             fail_closed=bool(runtime.get("fail_closed", False)),
             debug=bool(runtime.get("debug", False)),
+            enforce_linux=bool(runtime.get("enforce_linux", True)),
+            require_npm=bool(runtime.get("require_npm", True)),
         ),
     )
