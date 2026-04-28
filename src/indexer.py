@@ -1,13 +1,16 @@
-import pinecone
+from __future__ import annotations
+
 import os
-from .util import parse_skill_file, compute_sha256
+from typing import Any
+
+from .pinecone_client import build_pinecone_client
+from .util import parse_skill_file
 
 
 class SkillIndexer:
-    def __init__(self, config):
+    def __init__(self, config: Any) -> None:
         self.config = config
-        pinecone.init(api_key=config.pinecone.api_key, environment=config.pinecone.environment)
-        self.index = pinecone.Index(config.pinecone.index_name)
+        self.client = build_pinecone_client(config)
 
     def embed_batch(self, texts):
         import openai
@@ -53,6 +56,6 @@ class SkillIndexer:
                 records.append((f"{skill_name}:{m['section']}", emb, m))
 
         if records:
-            self.index.upsert(records)
+            self.client.upsert(records)
 
         return {"indexed": len(records)}
