@@ -1,31 +1,37 @@
-import pinecone
+from __future__ import annotations
+
 import os
+from typing import Any
+
+from .pinecone_client import build_pinecone_client
 from .policies import is_allowed
 
 
 class SkillRouter:
-    def __init__(self, config):
+    def __init__(self, config: Any) -> None:
         self.config = config
-        pinecone.init(api_key=config.pinecone.api_key, environment=config.pinecone.environment)
-        self.index = pinecone.Index(config.pinecone.index_name)
+        self.client = build_pinecone_client(config)
 
-    def embed(self, text):
+    def embed(self, text: str) -> list[float]:
         import openai
 
         openai.api_key = os.getenv("OPENAI_API_KEY")
         res = openai.Embedding.create(input=[text], model=self.config.embeddings.model)
         return res["data"][0]["embedding"]
 
-    def search(self, query):
+    def search(self, query: str):
         vec = self.embed(query)
-        res = self.index.query(vector=vec, top_k=self.config.routing.top_k, include_metadata=True)
+        res = self.client.query(vector=vec, top_k=self.config.routing.top_k, include_metadata=True)
 
         candidates = {}
 
-        for m in res["matches"]:
-            meta = m["metadata"]
+        for m in res.get("matches", []):
+            meta = m.get("metadata", {})
             name = meta.get("skill_name")
-            score = m["score"]
+            score = m.get("score", 0.0)
+
+            if not name:
+                continue
 
             if name not in candidates or candidates[name]["score"] < score:
                 candidates[name] = {
