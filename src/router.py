@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 from .cache import JsonCache, stable_hash
+from .feedback import SkillFeedbackStore
 from .pinecone_client import build_pinecone_client
 from .policies import is_allowed
 
@@ -13,6 +14,7 @@ class SkillRouter:
         self.config = config
         self.client = build_pinecone_client(config)
         self.cache = JsonCache("~/.hermes/cache/router.json", ttl_seconds=3600)
+        self.feedback = SkillFeedbackStore()
 
     def embed(self, text: str) -> list[float]:
         key = f"emb:{stable_hash(text)}"
@@ -27,6 +29,13 @@ class SkillRouter:
         vec = res["data"][0]["embedding"]
         self.cache.set(key, vec)
         return vec
+
+    def record_feedback(self, skill_name: str, success: bool, query: str | None = None, note: str | None = None):
+        # Feedback changes ranking. Clear cached search results so learning applies next time.
+        stats = self.feedback.record(skill_name=skill_name, success=success, query=query, note=note)
+        self.cache._data = {k: v for k, v in self.cache._data.items() if not k.startswith("search:")}
+        self.cache.save()
+        return stats
 
     def search(self, query: str):
         cache_key = f"search:{stable_hash(query)}"
@@ -47,10 +56,13 @@ class SkillRouter:
             if not name:
                 continue
 
-            if name not in candidates or candidates[name]["score"] < score:
+            adjusted_score = self.feedback.adjust_score(name, score)
+
+            if name not in candidates or candidates[name]["score"] < adjusted_score:
                 candidates[name] = {
                     "name": name,
-                    "score": score,
+                    "score": adjusted_score,
+                    "base_score": score,
                     "meta": meta,
                 }
 
