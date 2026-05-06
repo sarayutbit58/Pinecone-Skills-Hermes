@@ -57,6 +57,7 @@ class SafetyConfig:
     allow_community_skills: bool = False
     require_platform_match: bool = True
     require_toolset_match: bool = True
+    required_toolsets: list[str] = field(default_factory=list)
     supported_platforms: list[str] = field(default_factory=lambda: ["linux"])
     required_runtime_tools: list[str] = field(default_factory=lambda: ["node", "npm", "npx"])
     blocked_capabilities: list[str] = field(default_factory=lambda: [
@@ -143,6 +144,11 @@ def load_config(raw: dict[str, Any] | None) -> PluginConfig:
             allow_community_skills=bool(safety.get("allow_community_skills", False)),
             require_platform_match=bool(safety.get("require_platform_match", True)),
             require_toolset_match=bool(safety.get("require_toolset_match", True)),
+            required_toolsets=_as_list(safety.get("required_toolsets"), []),
+            blocked_capabilities=_as_list(
+                safety.get("blocked_capabilities"),
+                ["credential_access", "filesystem_write", "network_egress"],
+            ),
             supported_platforms=_as_list(safety.get("supported_platforms"), ["linux"]),
             required_runtime_tools=_as_list(safety.get("required_runtime_tools"), ["node", "npm", "npx"]),
             blocked_capabilities=_as_list(safety.get("blocked_capabilities"), ["credential_access", "filesystem_write", "network_egress"]),

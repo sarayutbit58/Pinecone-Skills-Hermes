@@ -33,8 +33,7 @@ class SkillRouter:
     def record_feedback(self, skill_name: str, success: bool, query: str | None = None, note: str | None = None):
         # Feedback changes ranking. Clear cached search results so learning applies next time.
         stats = self.feedback.record(skill_name=skill_name, success=success, query=query, note=note)
-        self.cache._data = {k: v for k, v in self.cache._data.items() if not k.startswith("search:")}
-        self.cache.save()
+        self.cache.delete_prefix("search:")
         return stats
 
     def search(self, query: str):

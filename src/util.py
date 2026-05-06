@@ -24,7 +24,7 @@ def parse_skill_file(filepath: str):
         if end != -1:
             try:
                 metadata = yaml.safe_load(text[3:end]) or {}
-            except:
+            except yaml.YAMLError:
                 metadata = {}
             body = text[end + 3 :]
 
@@ -33,7 +33,7 @@ def parse_skill_file(filepath: str):
     sections[current] = ""
 
     for line in body.splitlines():
-        m = re.match(r"^(##|###)\\s+(.*)", line)
+        m = re.match(r"^(##|###)\s+(.*)", line)
         if m:
             current = m.group(2).strip().lower().replace(" ", "_")
             sections[current] = ""

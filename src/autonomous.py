@@ -28,13 +28,12 @@ class AutonomousSkillAgent:
         if not skill_names:
             return user_input
 
-        injected = f"""
-[Auto-selected skills]
-{', '.join(skill_names)}
-
-Use these skills if relevant to solve the task.
-
-User task:
-{user_input}
-"""
-        return injected.strip()
+        return "\n".join([
+            "[Auto-selected skills]",
+            ", ".join(skill_names),
+            "",
+            "Use these skills if relevant to solve the task.",
+            "",
+            "User task:",
+            user_input,
+        ])
