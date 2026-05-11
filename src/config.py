@@ -57,6 +57,7 @@ class SafetyConfig:
     allow_community_skills: bool = False
     require_platform_match: bool = True
     require_toolset_match: bool = True
+    required_toolsets: list[str] = field(default_factory=list)
     blocked_capabilities: list[str] = field(default_factory=lambda: [
         "credential_access",
         "filesystem_write",
@@ -139,6 +140,7 @@ def load_config(raw: dict[str, Any] | None) -> PluginConfig:
             allow_community_skills=bool(safety.get("allow_community_skills", False)),
             require_platform_match=bool(safety.get("require_platform_match", True)),
             require_toolset_match=bool(safety.get("require_toolset_match", True)),
+            required_toolsets=_as_list(safety.get("required_toolsets"), []),
             blocked_capabilities=_as_list(safety.get("blocked_capabilities"), ["credential_access", "filesystem_write", "network_egress"]),
             redact_paths=bool(safety.get("redact_paths", True)),
         ),

@@ -4,7 +4,9 @@ pinecone_skill_router:
 
   pinecone:
     api_key: "${PINECONE_API_KEY}"
-    environment: "us-east-1-aws"
+    transport: "sdk"
+    cloud: "aws"
+    region: "us-east-1"
     index_name: "hermes-skills"
     namespace: "default"
 
@@ -12,7 +14,15 @@ pinecone_skill_router:
     provider: "openai"
     model: "text-embedding-3-small"
 
+  skills:
+    paths:
+      - "~/.hermes/skills"
+
   routing:
     top_k: 8
     auto_load_threshold: 0.84
     suggest_threshold: 0.74
+
+  safety:
+    require_toolset_match: true
+    required_toolsets: []

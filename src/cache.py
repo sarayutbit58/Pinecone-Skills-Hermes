@@ -50,3 +50,11 @@ class JsonCache:
     def set(self, key: str, value: Any) -> None:
         self._data[key] = {"ts": time.time(), "value": value}
         self.save()
+
+    def delete_prefix(self, prefix: str) -> int:
+        matching_keys = [key for key in self._data if key.startswith(prefix)]
+        for key in matching_keys:
+            self._data.pop(key, None)
+        if matching_keys:
+            self.save()
+        return len(matching_keys)
